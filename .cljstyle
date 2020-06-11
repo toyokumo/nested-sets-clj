@@ -1,0 +1,14 @@
+{:indentation? true
+ :list-indent-size 1
+ :line-break-functions? false
+ :line-break-vars? false
+ :remove-surrounding-whitespace? true
+ :remove-trailing-whitespace? true
+ :insert-missing-whitespace? true
+ :max-consecutive-blank-lines 2
+ :remove-consecutive-blank-lines true
+ :insert-padding-lines? false
+ :reformat-types? false
+ :rewrite-namespaces? true
+ :require-eof-newline? true
+ :indents {defschema [[:inner 0]]}}
