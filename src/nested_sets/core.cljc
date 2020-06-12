@@ -68,3 +68,51 @@
                          (zip/rightmost)
                          (zip/append-child node))
                      (conj parent-stack node)))))))))
+
+(s/defn vec-tree->nested-sets :- (s/maybe [Node])
+  "Make a nested sets as a vector from a vector tree
+  which may be made from nested-sets->vec-tree above"
+  [vec-tree]
+  (when (seq vec-tree)
+    (loop [loc (zip/vector-zip vec-tree)
+           i 1
+           acc []
+           parent-stack []]
+      (cond
+        (zip/end? loc)
+        acc
+
+        (zip/branch? loc)
+        (recur (zip/next loc)
+               i
+               acc
+               parent-stack)
+
+        ;; go out parents recursively
+        (and (seq parent-stack)
+             (<= (:rgt (peek parent-stack)) i))
+        (recur loc                                          ;not move
+               (inc i)
+               acc
+               (pop parent-stack))
+
+        (zip/branch? (zip/prev loc))
+        (let [children (-> loc zip/prev zip/children rest)
+              node (assoc (zip/node loc)
+                          :lft i
+                          :rgt (if (seq children)
+                                 (+ 1 i (* 2 (count (flatten children))))
+                                 (inc i)))]
+          (recur (zip/next loc)
+                 (inc i)
+                 (conj acc node)
+                 (conj parent-stack node)))
+
+        :else
+        (let [node (assoc (zip/node loc)
+                          :lft i
+                          :rgt (inc i))]
+          (recur (zip/next loc)
+                 (inc (:rgt node))
+                 (conj acc node)
+                 parent-stack))))))
