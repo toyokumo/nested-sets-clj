@@ -60,7 +60,7 @@
       (is (= [n1 n2 [n3 n4 n5 n6]]
              (sut/nested-sets->vec-tree [n1 n2 n3 n4 n5 n6])
              (sut/nested-sets->vec-tree (shuffle [n1 n2 n3 n4 n5 n6]))))))
-  (testing "tree2"
+  (testing "complex"
     ;; A-----B-----E
     ;; |
     ;; |-----C-----F----I
@@ -107,6 +107,64 @@
                (sut/nested-sets->vec-tree [a b e c x])
                (catch ExceptionInfo e
                  (ex-data e))))))))
+
+(deftest adjacency-list->vec-tree-test
+  (testing "empty nodes"
+    (is (nil? (sut/adjacency-list->vec-tree :id :parent-id nil)))
+    (is (nil? (sut/adjacency-list->vec-tree :id :parent-id []))))
+  (testing "only root node"
+    (let [a {:id :a :parent-id nil}]
+      (is (= [a]
+             (sut/adjacency-list->vec-tree :id :parent-id [a])))))
+  (testing "only leaf under the root"
+    (let [a {:id :a :parent-id nil}
+          b {:id :b :parent-id :a}
+          c {:id :c :parent-id :a}]
+      (is (= [a b c]
+             (sut/adjacency-list->vec-tree :id :parent-id [a b c])))))
+  (testing "only one subtree"
+    (let [a {:id :a :parent-id nil}
+          b {:id :b :parent-id :a}
+          c {:id :c :parent-id :b}]
+      (is (= [a [b c]]
+             (sut/adjacency-list->vec-tree :id :parent-id [a b c])))))
+  (testing "leaf and subtree under the root"
+    (let [a {:id :a :parent-id nil}
+          b {:id :b :parent-id :a}
+          c {:id :c :parent-id :b}]
+      (is (= [a [b c]]
+             (sut/adjacency-list->vec-tree :id :parent-id [a b c])))))
+  (testing "complex"
+    ;; A-----B-----E
+    ;; |
+    ;; |-----C-----F----I
+    ;; |     |     |
+    ;; |     |     ------J----M
+    ;; |     |           |
+    ;; |     |           -----N
+    ;; |      ------G
+    ;; ------D----- H------K
+    ;;              |
+    ;;              -------L
+    (let [a {:id :a :parent-id nil}
+          b {:id :b :parent-id :a}
+          c {:id :c :parent-id :a}
+          d {:id :d :parent-id :a}
+          e {:id :e :parent-id :b}
+          f {:id :f :parent-id :c}
+          g {:id :g :parent-id :c}
+          h {:id :h :parent-id :d}
+          i {:id :i :parent-id :f}
+          j {:id :j :parent-id :f}
+          k {:id :k :parent-id :h}
+          l {:id :l :parent-id :h}
+          m {:id :m :parent-id :j}
+          n {:id :n :parent-id :j}]
+      (is (= [a
+              [b e]
+              [c [f i [j m n]] g]
+              [d [h k l]]]
+             (sut/adjacency-list->vec-tree :id :parent-id [a b c d e f g h i j k l m n]))))))
 
 (deftest vec-tree->nested-sets-test
   (testing "empty vec"

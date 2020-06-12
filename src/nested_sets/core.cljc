@@ -36,7 +36,8 @@
   (sort-by :lft nodes))
 
 (s/defn nested-sets->vec-tree
-  "Make a vector that represents a tree which enable to be a zipper using vector-zip"
+  "Make a vector that represents a tree which enable to be a zipper using vector-zip
+  nodes must represent nested sets"
   [nodes :- [Node]]
   (when (seq nodes)
     (let [[root & children] (sort-nested-sets nodes)]
@@ -68,6 +69,46 @@
                          (zip/rightmost)
                          (zip/append-child node))
                      (conj parent-stack node)))))))))
+
+(s/defn adjacency-list->vec-tree
+  "Make a vector that represents a tree which enable to be a zipper using vector-zip
+  nodes must represent adjacency list"
+  [id-key :- s/Keyword
+   parent-id-key :- s/Keyword
+   nodes]
+  (when (seq nodes)
+    (let [parent-children (group-by parent-id-key nodes)
+          [root] (get parent-children nil)]
+      (loop [loc (zip/vector-zip [root])
+             [node & siblings] (get parent-children (id-key root))
+             sikblings-stack []]
+        (cond
+          (and (nil? node) (empty? sikblings-stack))
+          (zip/root loc)
+
+          ;; ends processing the level
+          (nil? node)
+          (recur (zip/up loc)
+                 (peek sikblings-stack)
+                 (pop sikblings-stack))
+
+          ;; current node has children
+          (seq (get parent-children (:id node)))
+          (let [children (get parent-children (:id node))]
+            (recur (-> loc
+                       (zip/append-child [])
+                       (zip/down)
+                       (zip/rightmost)
+                       (zip/append-child node))
+                   ;; make children level processed
+                   children
+                   ;; save same level nodes that isn't processed
+                   (conj sikblings-stack siblings)))
+
+          :else
+          (recur (zip/append-child loc node)
+                 siblings
+                 sikblings-stack))))))
 
 (s/defn vec-tree->nested-sets :- (s/maybe [Node])
   "Make a nested sets as a vector from a vector tree
