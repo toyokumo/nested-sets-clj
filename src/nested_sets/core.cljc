@@ -6,7 +6,7 @@
 (s/defschema Node
   {:lft s/Int
    :rgt s/Int
-   (s/maybe s/Keyword) s/Any})
+   s/Keyword s/Any})
 
 (s/defn root?
   "true if the node is the root node"
