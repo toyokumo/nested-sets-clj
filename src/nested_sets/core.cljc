@@ -81,16 +81,16 @@
           [root] (get parent-children nil)]
       (loop [loc (zip/vector-zip [root])
              [node & siblings] (get parent-children (id-key root))
-             sikblings-stack []]
+             siblings-stack []]
         (cond
-          (and (nil? node) (empty? sikblings-stack))
+          (and (nil? node) (empty? siblings-stack))
           (zip/root loc)
 
           ;; ends processing the level
           (nil? node)
           (recur (zip/up loc)
-                 (peek sikblings-stack)
-                 (pop sikblings-stack))
+                 (peek siblings-stack)
+                 (pop siblings-stack))
 
           ;; current node has children
           (seq (get parent-children (:id node)))
@@ -103,12 +103,12 @@
                    ;; make children level processed
                    children
                    ;; save same level nodes that isn't processed
-                   (conj sikblings-stack siblings)))
+                   (conj siblings-stack siblings)))
 
           :else
           (recur (zip/append-child loc node)
                  siblings
-                 sikblings-stack))))))
+                 siblings-stack))))))
 
 (s/defn vec-tree->nested-sets :- (s/maybe [Node])
   "Make a nested sets as a vector from a vector tree
