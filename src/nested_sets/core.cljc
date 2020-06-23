@@ -1,6 +1,6 @@
 (ns nested-sets.core
   (:require
-   [clojure.zip :as zip]
+   [clojure.zip :as z]
    [schema.core :as s]))
 
 (s/defschema Node
@@ -42,10 +42,10 @@
   (when (seq nodes)
     (let [[root & children] (sort-nested-sets nodes)]
       (loop [[node :as rest-nodes] children
-             loc (zip/vector-zip [root])
+             loc (z/vector-zip [root])
              parent-stack [root]]
         (if-not node
-          (zip/root loc)
+          (z/root loc)
           (let [parent (peek parent-stack)]
             (cond
               (nil? parent)
@@ -53,21 +53,21 @@
 
               (not (ancestor? parent node))
               (recur rest-nodes
-                     (zip/up loc)
+                     (z/up loc)
                      (pop parent-stack))
 
               (leaf? node)
               (recur (rest rest-nodes)
-                     (zip/append-child loc node)
+                     (z/append-child loc node)
                      parent-stack)
 
               :else
               (recur (rest rest-nodes)
                      (-> loc
-                         (zip/append-child [])
-                         (zip/down)
-                         (zip/rightmost)
-                         (zip/append-child node))
+                         (z/append-child [])
+                         (z/down)
+                         (z/rightmost)
+                         (z/append-child node))
                      (conj parent-stack node)))))))))
 
 (s/defn adjacency-list->vec-tree
@@ -79,16 +79,16 @@
   (when (seq nodes)
     (let [parent-children (group-by parent-id-key nodes)
           [root] (get parent-children nil)]
-      (loop [loc (zip/vector-zip [root])
+      (loop [loc (z/vector-zip [root])
              [node & siblings] (get parent-children (id-key root))
              siblings-stack []]
         (cond
           (and (nil? node) (empty? siblings-stack))
-          (zip/root loc)
+          (z/root loc)
 
           ;; ends processing the level
           (nil? node)
-          (recur (zip/up loc)
+          (recur (z/up loc)
                  (peek siblings-stack)
                  (pop siblings-stack))
 
@@ -96,17 +96,17 @@
           (seq (get parent-children (:id node)))
           (let [children (get parent-children (:id node))]
             (recur (-> loc
-                       (zip/append-child [])
-                       (zip/down)
-                       (zip/rightmost)
-                       (zip/append-child node))
+                       (z/append-child [])
+                       (z/down)
+                       (z/rightmost)
+                       (z/append-child node))
                    ;; make children level processed
                    children
                    ;; save same level nodes that isn't processed
                    (conj siblings-stack siblings)))
 
           :else
-          (recur (zip/append-child loc node)
+          (recur (z/append-child loc node)
                  siblings
                  siblings-stack))))))
 
@@ -115,16 +115,16 @@
   which may be made from nested-sets->vec-tree above"
   [vec-tree]
   (when (seq vec-tree)
-    (loop [loc (zip/vector-zip vec-tree)
+    (loop [loc (z/vector-zip vec-tree)
            i 1
            acc []
            parent-stack []]
       (cond
-        (zip/end? loc)
+        (z/end? loc)
         acc
 
-        (zip/branch? loc)
-        (recur (zip/next loc)
+        (z/branch? loc)
+        (recur (z/next loc)
                i
                acc
                parent-stack)
@@ -137,23 +137,23 @@
                acc
                (pop parent-stack))
 
-        (zip/branch? (zip/prev loc))
-        (let [children (-> loc zip/prev zip/children rest)
-              node (assoc (zip/node loc)
+        (z/branch? (z/prev loc))
+        (let [children (-> loc z/prev z/children rest)
+              node (assoc (z/node loc)
                           :lft i
                           :rgt (if (seq children)
                                  (+ 1 i (* 2 (count (flatten children))))
                                  (inc i)))]
-          (recur (zip/next loc)
+          (recur (z/next loc)
                  (inc i)
                  (conj acc node)
                  (conj parent-stack node)))
 
         :else
-        (let [node (assoc (zip/node loc)
+        (let [node (assoc (z/node loc)
                           :lft i
                           :rgt (inc i))]
-          (recur (zip/next loc)
+          (recur (z/next loc)
                  (inc (:rgt node))
                  (conj acc node)
                  parent-stack))))))
