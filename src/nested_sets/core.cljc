@@ -58,16 +58,15 @@
 
               (leaf? node)
               (recur (rest rest-nodes)
-                     (z/append-child loc node)
+                     (z/append-child loc [node])
                      parent-stack)
 
               :else
               (recur (rest rest-nodes)
                      (-> loc
-                         (z/append-child [])
+                         (z/append-child [node])
                          (z/down)
-                         (z/rightmost)
-                         (z/append-child node))
+                         (z/rightmost))
                      (conj parent-stack node)))))))))
 
 (s/defn adjacency-list->vec-tree
@@ -96,17 +95,16 @@
           (seq (get parent-children (:id node)))
           (let [children (get parent-children (:id node))]
             (recur (-> loc
-                       (z/append-child [])
+                       (z/append-child [node])
                        (z/down)
-                       (z/rightmost)
-                       (z/append-child node))
+                       (z/rightmost))
                    ;; make children level processed
                    children
                    ;; save same level nodes that isn't processed
                    (conj siblings-stack siblings)))
 
           :else
-          (recur (z/append-child loc node)
+          (recur (z/append-child loc [node])
                  siblings
                  siblings-stack))))))
 

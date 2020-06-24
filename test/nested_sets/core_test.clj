@@ -51,13 +51,21 @@
       (is (= [n1]
              (sut/nested-sets->vec-tree [n1])))))
   (testing "tree1"
+    ;; n1--n2
+    ;; |
+    ;; n3--n4
+    ;; |---n5
+    ;; |---n5
+    ;; |---n6
     (let [n1 {:id 1 :parent-id nil :lft 1 :rgt 12}
           n2 {:id 2 :parent-id 1 :lft 2 :rgt 3}
           n3 {:id 3 :parent-id 1 :lft 4 :rgt 11}
           n4 {:id 4 :parent-id 3 :lft 5 :rgt 6}
           n5 {:id 5 :parent-id 3 :lft 7 :rgt 8}
           n6 {:id 6 :parent-id 3 :lft 9 :rgt 10}]
-      (is (= [n1 n2 [n3 n4 n5 n6]]
+      (is (= [n1
+              [n2]
+              [n3 [n4] [n5] [n6]]]
              (sut/nested-sets->vec-tree [n1 n2 n3 n4 n5 n6])
              (sut/nested-sets->vec-tree (shuffle [n1 n2 n3 n4 n5 n6]))))))
   (testing "complex"
@@ -87,9 +95,13 @@
           m {:id :m :lft 11 :rgt 12}
           n {:id :n :lft 13 :rgt 14}]
       (is (= [a
-              [b e]
-              [c [f i [j m n]] g]
-              [d [h k l]]]
+              [b [e]]
+              [c [f
+                  [i]
+                  [j [m] [n]]]
+               [g]]
+              [d
+               [h [k] [l]]]]
              (sut/nested-sets->vec-tree [a b c d e f g h i j k l m n])))))
   (testing "orphan node"
     ;; A-----B-----E
@@ -120,20 +132,23 @@
     (let [a {:id :a :parent-id nil}
           b {:id :b :parent-id :a}
           c {:id :c :parent-id :a}]
-      (is (= [a b c]
+      (is (= [a [b] [c]]
              (sut/adjacency-list->vec-tree :id :parent-id [a b c])))))
   (testing "only one subtree"
     (let [a {:id :a :parent-id nil}
           b {:id :b :parent-id :a}
           c {:id :c :parent-id :b}]
-      (is (= [a [b c]]
+      (is (= [a [b [c]]]
              (sut/adjacency-list->vec-tree :id :parent-id [a b c])))))
   (testing "leaf and subtree under the root"
     (let [a {:id :a :parent-id nil}
           b {:id :b :parent-id :a}
-          c {:id :c :parent-id :b}]
-      (is (= [a [b c]]
-             (sut/adjacency-list->vec-tree :id :parent-id [a b c])))))
+          c {:id :c :parent-id :b}
+          d {:id :d :parent-id :a}]
+      (is (= [a [b [c]] [d]]
+             (sut/adjacency-list->vec-tree :id :parent-id [a b c d])))
+      (is (= [a [d] [b [c]]]
+             (sut/adjacency-list->vec-tree :id :parent-id [a d b c])))))
   (testing "complex"
     ;; A-----B-----E
     ;; |
@@ -161,9 +176,13 @@
           m {:id :m :parent-id :j}
           n {:id :n :parent-id :j}]
       (is (= [a
-              [b e]
-              [c [f i [j m n]] g]
-              [d [h k l]]]
+              [b [e]]
+              [c [f
+                  [i]
+                  [j [m] [n]]]
+               [g]]
+              [d
+               [h [k] [l]]]]
              (sut/adjacency-list->vec-tree :id :parent-id [a b c d e f g h i j k l m n]))))))
 
 (deftest vec-tree->nested-sets-test
@@ -177,29 +196,29 @@
     (is (= [{:id :a :lft 1 :rgt 4}
             {:id :b :lft 2 :rgt 3}]
            (sut/vec-tree->nested-sets [{:id :a}
-                                       {:id :b}])))
+                                       [{:id :b}]])))
     (is (= [{:id :a :lft 1 :rgt 6}
             {:id :b :lft 2 :rgt 3}
             {:id :c :lft 4 :rgt 5}]
            (sut/vec-tree->nested-sets [{:id :a}
-                                       {:id :b}
-                                       {:id :c}]))))
+                                       [{:id :b}]
+                                       [{:id :c}]]))))
   (testing "only subtree under the root"
     (is (= [{:id :a :lft 1 :rgt 6}
             {:id :b :lft 2 :rgt 5}
             {:id :c :lft 3 :rgt 4}]
            (sut/vec-tree->nested-sets [{:id :a}
                                        [{:id :b}
-                                        {:id :c}]]))))
+                                        [{:id :c}]]]))))
   (testing "leaf and subtree under the root"
     (is (= [{:id :a :lft 1 :rgt 8}
             {:id :b :lft 2 :rgt 3}
             {:id :c :lft 4 :rgt 7}
             {:id :d :lft 5 :rgt 6}]
            (sut/vec-tree->nested-sets [{:id :a}
-                                       {:id :b}
+                                       [{:id :b}]
                                        [{:id :c}
-                                        {:id :d}]]))))
+                                        [{:id :d}]]]))))
   (testing "subtree and leaf under the root"
     (is (= [{:id :a :lft 1 :rgt 8}
             {:id :b :lft 2 :rgt 5}
@@ -207,8 +226,8 @@
             {:id :d :lft 6 :rgt 7}]
            (sut/vec-tree->nested-sets [{:id :a}
                                        [{:id :b}
-                                        {:id :c}]
-                                       {:id :d}]))))
+                                        [{:id :c}]]
+                                       [{:id :d}]]))))
   (testing "nested subtree under the root"
     (is (= [{:id :a :lft 1 :rgt 12}
             {:id :b :lft 2 :rgt 9}
@@ -220,8 +239,8 @@
                                        [{:id :b}
                                         [{:id :c}
                                          [{:id :d}
-                                          {:id :e}]]]
-                                       {:id :f}]))))
+                                          [{:id :e}]]]]
+                                       [{:id :f}]]))))
   (testing "complex"
     ;; A-----B-----E
     ;; |
@@ -251,6 +270,10 @@
           coll [a b c d e f g h i j k l m n]]
       (is (= (sort-by :lft coll)
              (sut/vec-tree->nested-sets [a
-                                         [b e]
-                                         [c [f i [j m n]] g]
-                                         [d [h k l]]]))))))
+                                         [b [e]]
+                                         [c [f
+                                             [i]
+                                             [j [m] [n]]]
+                                          [g]]
+                                         [d
+                                          [h [k] [l]]]]))))))

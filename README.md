@@ -12,42 +12,30 @@ Make a vector tree from nested sets which is sometimes gotton from DB.
 ```clj
 (require '[nested-sets.core :as nested])
 
-;; A-----B-----E
+;; A-----B-----C
 ;; |
-;; |-----C-----F----I
+;; |-----D-----E----F
 ;; |     |     |
-;; |     |     ------J----M
-;; |     |           |
-;; |     |           -----N
-;; |      ------G
-;; ------D----- H------K
-;;              |
-;;              -------L
-(let [a {:id :a :lft 1 :rgt 28}
+;; |     |     -----G---H
+;; |      -----I
+(let [a {:id :a :lft 1 :rgt 18}
       b {:id :b :lft 2 :rgt 5}
-      c {:id :c :lft 6 :rgt 19}
-      d {:id :d :lft 20 :rgt 27}
-      e {:id :e :lft 3 :rgt 4}
-      f {:id :f :lft 7 :rgt 16}
-      g {:id :g :lft 17 :rgt 18}
-      h {:id :h :lft 21 :rgt 26}
-      i {:id :i :lft 8 :rgt 9}
-      j {:id :j :lft 10 :rgt 15}
-      k {:id :k :lft 22 :rgt 23}
-      l {:id :l :lft 24 :rgt 25}
-      m {:id :m :lft 11 :rgt 12}
-      n {:id :n :lft 13 :rgt 14}]
-  (nested/nested-sets->vec-tree [a b c d e f g h i j k l m n]))
-;=>
-[{:id :a, :lft 1, :rgt 28}
- [{:id :b, :lft 2, :rgt 5} {:id :e, :lft 3, :rgt 4}]
- [{:id :c, :lft 6, :rgt 19}
-  [{:id :f, :lft 7, :rgt 16}
-   {:id :i, :lft 8, :rgt 9}
-   [{:id :j, :lft 10, :rgt 15} {:id :m, :lft 11, :rgt 12} {:id :n, :lft 13, :rgt 14}]]
-  {:id :g, :lft 17, :rgt 18}]
- [{:id :d, :lft 20, :rgt 27}
-  [{:id :h, :lft 21, :rgt 26} {:id :k, :lft 22, :rgt 23} {:id :l, :lft 24, :rgt 25}]]]
+      c {:id :c :lft 3 :rgt 4}
+      d {:id :d :lft 6 :rgt 17}
+      e {:id :e :lft 7 :rgt 14}
+      f {:id :f :lft 8 :rgt 9}
+      g {:id :g :lft 10 :rgt 13}
+      h {:id :h :lft 11 :rgt 12}
+      i {:id :i :lft 15 :rgt 16}]
+  (= [a
+      [b [c]]
+      [d
+       [e
+        [f]
+        [g [h]]]
+       [i]]]
+     (nested/nested-sets->vec-tree [a b c d e f g h i])))
+;=> true
 ```
 
 On the contary, it enable to make nested sets form a vector tree.
@@ -55,17 +43,12 @@ On the contary, it enable to make nested sets form a vector tree.
 ```clj
 (require '[nested-sets.core :as nested])
 
-;; A-----B-----E
+;; A-----B-----C
 ;; |
-;; |-----C-----F----I
+;; |-----D-----E----F
 ;; |     |     |
-;; |     |     ------J----M
-;; |     |           |
-;; |     |           -----N
-;; |      ------G
-;; ------D----- H------K
-;;              |
-;;              -------L
+;; |     |     -----G---H
+;; |      -----I
 (let [a {:id :a}
       b {:id :b}
       c {:id :c}
@@ -74,31 +57,24 @@ On the contary, it enable to make nested sets form a vector tree.
       f {:id :f}
       g {:id :g}
       h {:id :h}
-      i {:id :i}
-      j {:id :j}
-      k {:id :k}
-      l {:id :l}
-      m {:id :m}
-      n {:id :n}]
-  (nested/vec-tree->nested-sets [a
-                                 [b e]
-                                 [c [f i [j m n]] g]
-                                 [d [h k l]]]))
-;=>
-[{:id :a, :lft 1, :rgt 28}
- {:id :b, :lft 2, :rgt 5}
- {:id :e, :lft 3, :rgt 4}
- {:id :c, :lft 6, :rgt 19}
- {:id :f, :lft 7, :rgt 16}
- {:id :i, :lft 8, :rgt 9}
- {:id :j, :lft 10, :rgt 15}
- {:id :m, :lft 11, :rgt 12}
- {:id :n, :lft 13, :rgt 14}
- {:id :g, :lft 17, :rgt 18}
- {:id :d, :lft 20, :rgt 27}
- {:id :h, :lft 21, :rgt 26}
- {:id :k, :lft 22, :rgt 23}
- {:id :l, :lft 24, :rgt 25}]
+      i {:id :i}]
+  (= [{:id :a :lft 1 :rgt 18}
+      {:id :b :lft 2 :rgt 5}
+      {:id :c :lft 3 :rgt 4}
+      {:id :d :lft 6 :rgt 17}
+      {:id :e :lft 7 :rgt 14}
+      {:id :f :lft 8 :rgt 9}
+      {:id :g :lft 10 :rgt 13}
+      {:id :h :lft 11 :rgt 12}
+      {:id :i :lft 15 :rgt 16}]
+     (nested/vec-tree->nested-sets [a
+                                    [b [c]]
+                                    [d
+                                     [e
+                                      [f]
+                                      [g [h]]]
+                                     [i]]])))
+;=> true
 ```
 
 It also provides a function to make a vector tree from adjacency list.
@@ -106,41 +82,29 @@ It also provides a function to make a vector tree from adjacency list.
 ```clj
 (require '[nested-sets.core :as nested])
 
-;; A-----B-----E
+;; A-----B-----C
 ;; |
-;; |-----C-----F----I
+;; |-----D-----E----F
 ;; |     |     |
-;; |     |     ------J----M
-;; |     |           |
-;; |     |           -----N
-;; |      ------G
-;; ------D----- H------K
-;;              |
-;;              -------L
+;; |     |     -----G---H
+;; |      -----I
 (let [a {:id :a :parent-id nil}
       b {:id :b :parent-id :a}
-      c {:id :c :parent-id :a}
+      c {:id :c :parent-id :b}
       d {:id :d :parent-id :a}
-      e {:id :e :parent-id :b}
-      f {:id :f :parent-id :c}
-      g {:id :g :parent-id :c}
-      h {:id :h :parent-id :d}
-      i {:id :i :parent-id :f}
-      j {:id :j :parent-id :f}
-      k {:id :k :parent-id :h}
-      l {:id :l :parent-id :h}
-      m {:id :m :parent-id :j}
-      n {:id :n :parent-id :j}]
-  (nested/adjacency-list->vec-tree :id :parent-id [a b c d e f g h i j k l m n]))
-;=>
-[{:id :a, :parent-id nil}
- [{:id :b, :parent-id :a} {:id :e, :parent-id :b}]
- [{:id :c, :parent-id :a}
-  [{:id :f, :parent-id :c}
-   {:id :i, :parent-id :f}
-   [{:id :j, :parent-id :f} {:id :m, :parent-id :j} {:id :n, :parent-id :j}]]
-  {:id :g, :parent-id :c}]
- [{:id :d, :parent-id :a} [{:id :h, :parent-id :d} {:id :k, :parent-id :h} {:id :l, :parent-id :h}]]]
+      e {:id :e :parent-id :d}
+      f {:id :f :parent-id :e}
+      g {:id :g :parent-id :e}
+      h {:id :h :parent-id :g}
+      i {:id :i :parent-id :d}]
+  (= [a
+      [b [c]]
+      [d
+       [e
+        [f]
+        [g [h]]]
+       [i]]]
+     (nested/adjacency-list->vec-tree :id :parent-id [a b c d e f g h i])))
 ```
 
 ## License
