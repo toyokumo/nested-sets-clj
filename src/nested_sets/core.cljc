@@ -37,12 +37,18 @@
 
 (s/defn nested-sets->vec-tree
   "Make a vector that represents a tree which enable to be a zipper using vector-zip
-  nodes must represent nested sets"
-  [nodes :- [Node]]
+  nodes must represent nested sets
+
+  This can take a options.
+   :make-node - a function that, given a node, returns a vector which represents a node of a tree
+                default: clojure.core/vector in clj or cljs.core/vector in cljs"
+  [nodes :- [Node]
+   & [opts]]
   (when (seq nodes)
-    (let [[root & children] (sort-nested-sets nodes)]
+    (let [make-node (or (:make-node opts) vector)
+          [root & children] (sort-nested-sets nodes)]
       (loop [[node :as rest-nodes] children
-             loc (z/vector-zip [root])
+             loc (z/vector-zip (make-node root))
              parent-stack [root]]
         (if-not node
           (z/root loc)
@@ -58,27 +64,36 @@
 
               (leaf? node)
               (recur (rest rest-nodes)
-                     (z/append-child loc [node])
+                     (z/append-child loc (make-node node))
                      parent-stack)
 
               :else
               (recur (rest rest-nodes)
                      (-> loc
-                         (z/append-child [node])
+                         (z/append-child (make-node node))
                          (z/down)
                          (z/rightmost))
                      (conj parent-stack node)))))))))
 
 (s/defn adjacency-list->vec-tree
   "Make a vector that represents a tree which enable to be a zipper using vector-zip
-  nodes must represent adjacency list"
+  nodes must represent adjacency list
+
+  id-key        - a keyword that represents id of a node
+  parent-id-key - a keyword that represents parent id of a node
+
+  This can take a options.
+   :make-node - a function that, given a node, returns a vector which represents a node of a tree
+                default: clojure.core/vector in clj or cljs.core/vector in cljs"
   [id-key :- s/Keyword
    parent-id-key :- s/Keyword
-   nodes]
+   nodes
+   & [opts]]
   (when (seq nodes)
-    (let [parent-children (group-by parent-id-key nodes)
+    (let [make-node (or (:make-node opts) vector)
+          parent-children (group-by parent-id-key nodes)
           [root] (get parent-children nil)]
-      (loop [loc (z/vector-zip [root])
+      (loop [loc (z/vector-zip (make-node root))
              [node & siblings] (get parent-children (id-key root))
              siblings-stack []]
         (cond
@@ -92,10 +107,10 @@
                  (pop siblings-stack))
 
           ;; current node has children
-          (seq (get parent-children (:id node)))
-          (let [children (get parent-children (:id node))]
+          (seq (get parent-children (id-key node)))
+          (let [children (get parent-children (id-key node))]
             (recur (-> loc
-                       (z/append-child [node])
+                       (z/append-child (make-node node))
                        (z/down)
                        (z/rightmost))
                    ;; make children level processed
@@ -104,7 +119,7 @@
                    (conj siblings-stack siblings)))
 
           :else
-          (recur (z/append-child loc [node])
+          (recur (z/append-child loc (make-node node))
                  siblings
                  siblings-stack))))))
 

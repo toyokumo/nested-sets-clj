@@ -38,6 +38,30 @@ Make a vector tree from nested sets which is sometimes gotton from DB.
 ;=> true
 ```
 
+`nested-sets->vec-tree` can also take a function which control how to make a node in the tree.
+
+```clojure
+(let [a {:id :a :lft 1 :rgt 18}
+      b {:id :b :lft 2 :rgt 5}
+      c {:id :c :lft 3 :rgt 4}
+      d {:id :d :lft 6 :rgt 17}
+      e {:id :e :lft 7 :rgt 14}
+      f {:id :f :lft 8 :rgt 9}
+      g {:id :g :lft 10 :rgt 13}
+      h {:id :h :lft 11 :rgt 12}
+      i {:id :i :lft 15 :rgt 16}]
+  (= [:Node a
+      [:Node b [:Node c]]
+      [:Node d
+       [:Node e
+        [:Node f]
+        [:Node g [:Node h]]]
+       [:Node i]]]
+     (nested/nested-sets->vec-tree [a b c d e f g h i]
+                                   {:make-node (fn [node] [:Node node])})))
+;=> true
+```
+
 On the contary, it enable to make nested sets form a vector tree.
 
 ```clj
@@ -105,6 +129,31 @@ It also provides a function to make a vector tree from adjacency list.
         [g [h]]]
        [i]]]
      (nested/adjacency-list->vec-tree :id :parent-id [a b c d e f g h i])))
+```
+
+`adjacency-list->vec-tree` can also take a function which control how to make a node in the tree.
+
+```clojure
+(let [a {:id :a :parent-id nil}
+      b {:id :b :parent-id :a}
+      c {:id :c :parent-id :b}
+      d {:id :d :parent-id :a}
+      e {:id :e :parent-id :d}
+      f {:id :f :parent-id :e}
+      g {:id :g :parent-id :e}
+      h {:id :h :parent-id :g}
+      i {:id :i :parent-id :d}]
+  (= [:Node a
+      [:Node b [:Node c]]
+      [:Node d
+       [:Node e
+        [:Node f]
+        [:Node g [:Node h]]]
+       [:Node i]]]
+     (nested/adjacency-list->vec-tree :id
+                                      :parent-id
+                                      [a b c d e f g h i]
+                                      {:make-node (fn [node] [:Node node])})))
 ```
 
 ## License
