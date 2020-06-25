@@ -1,7 +1,7 @@
 (ns nested-sets.core-test
   (:require
    [clojure.test :refer [deftest is testing]]
-   [nested-sets.core :as sut])
+   [nested-sets.core :as sut :refer :all])
   (:import
    (clojure.lang
     ExceptionInfo)))
@@ -329,3 +329,135 @@
                                           [g]]
                                          [d
                                           [h [k] [l]]]]))))))
+
+(deftest add-child-test
+  (testing "empty nodes"
+    (is (= [{:id :a :lft 1 :rgt 2}]
+           (add-child {:id :a} nil []))))
+  (testing "nodes only has a root"
+    (is (= [{:id :a :lft 1 :rgt 4}
+            {:id :b :lft 2 :rgt 3}]
+           (add-child {:id :b}
+                      {:id :a :lft 1 :rgt 2}
+                      [{:id :a :lft 1 :rgt 2}]))))
+  (testing "tree1"
+    ;; A--B--C
+    (is (= [{:id :a :lft 1 :rgt 6}
+            {:id :b :lft 2 :rgt 5}
+            {:id :c :lft 3 :rgt 4}]
+           (add-child {:id :c}
+                      {:id :b :lft 2 :rgt 3}
+                      [{:id :a :lft 1 :rgt 4}
+                       {:id :b :lft 2 :rgt 3}]))))
+  (testing "tree2"
+    ;; A-----B
+    ;; |
+    ;; |-----C-----D
+    ;;             |
+    ;;             ---< E >
+    ;; Add E
+    (let [a {:id :a :lft 1 :rgt 8}
+          b {:id :b :lft 2 :rgt 3}
+          c {:id :c :lft 4 :rgt 7}
+          d {:id :d :lft 5 :rgt 6}
+          e {:id :e}]
+      (is (= [{:id :a :lft 1 :rgt 10}
+              {:id :b :lft 2 :rgt 3}
+              {:id :c :lft 4 :rgt 9}
+              {:id :d :lft 5 :rgt 8}
+              {:id :e :lft 6 :rgt 7}]
+             (add-child e
+                        d
+                        [a b c d]))))))
+
+(deftest add-left-sibling-test
+  (testing "empty nodes"
+    (is (= [{:id :a :lft 1 :rgt 2}]
+           (add-left-sibling {:id :a} nil []))))
+  (testing "nodes only has a root"
+    (is (= [{:id :a :lft 1 :rgt 6}
+            {:id :c :lft 2 :rgt 3}
+            {:id :b :lft 4 :rgt 5}]
+           (add-left-sibling {:id :c}
+                             {:id :b :lft 2 :rgt 3}
+                             [{:id :a :lft 1 :rgt 4}
+                              {:id :b :lft 2 :rgt 3}]))))
+  (testing "tree1"
+    ;; A--B
+    ;; |
+    ;; ---C
+    (is (= [{:id :a :lft 1 :rgt 8}
+            {:id :b :lft 2 :rgt 3}
+            {:id :d :lft 4 :rgt 5}
+            {:id :c :lft 6 :rgt 7}]
+           (add-left-sibling {:id :d}
+                             {:id :c :lft 4 :rgt 5}
+                             [{:id :a :lft 1 :rgt 6}
+                              {:id :b :lft 2 :rgt 3}
+                              {:id :c :lft 4 :rgt 5}]))))
+  (testing "tree2"
+    ;; A-----B
+    ;; |
+    ;; |-----C---< E >
+    ;;       |
+    ;;       ---- D
+    ;; Add E
+    (let [a {:id :a :lft 1 :rgt 8}
+          b {:id :b :lft 2 :rgt 3}
+          c {:id :c :lft 4 :rgt 7}
+          d {:id :d :lft 5 :rgt 6}
+          e {:id :e}]
+      (is (= [{:id :a :lft 1 :rgt 10}
+              {:id :b :lft 2 :rgt 3}
+              {:id :c :lft 4 :rgt 9}
+              {:id :e :lft 5 :rgt 6}
+              {:id :d :lft 7 :rgt 8}]
+             (add-left-sibling e
+                               d
+                               [a b c d]))))))
+
+(deftest add-right-sibling-test
+  (testing "empty nodes"
+    (is (= [{:id :a :lft 1 :rgt 2}]
+           (add-right-sibling {:id :a} nil []))))
+  (testing "nodes only has a root"
+    (is (= [{:id :a :lft 1 :rgt 6}
+            {:id :b :lft 2 :rgt 3}
+            {:id :c :lft 4 :rgt 5}]
+           (add-right-sibling {:id :c}
+                              {:id :b :lft 2 :rgt 3}
+                              [{:id :a :lft 1 :rgt 4}
+                               {:id :b :lft 2 :rgt 3}]))))
+  (testing "tree1"
+     ;; A--B
+     ;; |
+     ;; ---C
+    (is (= [{:id :a :lft 1 :rgt 8}
+            {:id :b :lft 2 :rgt 3}
+            {:id :c :lft 4 :rgt 5}
+            {:id :d :lft 6 :rgt 7}]
+           (add-right-sibling {:id :d}
+                              {:id :c :lft 4 :rgt 5}
+                              [{:id :a :lft 1 :rgt 6}
+                               {:id :b :lft 2 :rgt 3}
+                               {:id :c :lft 4 :rgt 5}]))))
+  (testing "tree2"
+    ;; A-----B
+    ;; |
+    ;; |-----C----D
+    ;;       |
+    ;;       ----< E >
+    ;; Add E
+    (let [a {:id :a :lft 1 :rgt 8}
+          b {:id :b :lft 2 :rgt 3}
+          c {:id :c :lft 4 :rgt 7}
+          d {:id :d :lft 5 :rgt 6}
+          e {:id :e}]
+      (is (= [{:id :a :lft 1 :rgt 10}
+              {:id :b :lft 2 :rgt 3}
+              {:id :c :lft 4 :rgt 9}
+              {:id :d :lft 5 :rgt 6}
+              {:id :e :lft 7 :rgt 8}]
+             (add-right-sibling e
+                                d
+                                [a b c d]))))))

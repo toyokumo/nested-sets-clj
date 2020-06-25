@@ -158,3 +158,79 @@
                  (inc (:rgt node))
                  (conj acc node)
                  parent-stack))))))
+
+(defn add-child
+  "Add a new-node to the nodes as a child of the parent-node"
+  [new-node parent-node nodes]
+  (if (empty? nodes)
+    [(assoc new-node :lft 1 :rgt 2)]
+    (loop [loc (z/vector-zip (nested-sets->vec-tree nodes))]
+      (cond
+        ;; parent-node doesn't exist
+        (z/end? loc)
+        (vec-tree->nested-sets (z/root loc))
+
+        (z/branch? loc)
+        (recur (z/next loc))
+
+        ;; found the parent
+        (= (z/node loc) parent-node)
+        (-> loc
+            (z/insert-right [new-node])
+            (z/root)
+            (vec-tree->nested-sets))
+
+        :else
+        (recur (z/next loc))))))
+
+(defn add-left-sibling
+  "Add a new-node to the nodes as a left sibling of the focus-node"
+  [new-node focus-node nodes]
+  (assert (not (root? focus-node)))
+  (if (empty? nodes)
+    [(assoc new-node :lft 1 :rgt 2)]
+    (loop [loc (z/vector-zip (nested-sets->vec-tree nodes))]
+      (cond
+        ;; focus-node doesn't exist
+        (z/end? loc)
+        (vec-tree->nested-sets (z/root loc))
+
+        (z/branch? loc)
+        (recur (z/next loc))
+
+        ;; found the focus-node
+        (= (z/node loc) focus-node)
+        (-> loc
+            (z/up)
+            (z/insert-left [new-node])
+            (z/root)
+            (vec-tree->nested-sets))
+
+        :else
+        (recur (z/next loc))))))
+
+(defn add-right-sibling
+  "Add a new-node to the nodes as a right sibling of the focus-node"
+  [new-node focus-node nodes]
+  (assert (not (root? focus-node)))
+  (if (empty? nodes)
+    [(assoc new-node :lft 1 :rgt 2)]
+    (loop [loc (z/vector-zip (nested-sets->vec-tree nodes))]
+      (cond
+        ;; focus-node doesn't exist
+        (z/end? loc)
+        (vec-tree->nested-sets (z/root loc))
+
+        (z/branch? loc)
+        (recur (z/next loc))
+
+        ;; found the focus-node
+        (= (z/node loc) focus-node)
+        (-> loc
+            (z/up)
+            (z/insert-right [new-node])
+            (z/root)
+            (vec-tree->nested-sets))
+
+        :else
+        (recur (z/next loc))))))
