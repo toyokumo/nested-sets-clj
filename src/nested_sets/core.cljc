@@ -160,7 +160,7 @@
                  parent-stack))))))
 
 (defn add-child
-  "Add a new-node to the nodes as a child of the parent-node"
+  "Add a new-node to the nodes as the rightmost child of the parent-node"
   [new-node parent-node nodes]
   (if (empty? nodes)
     [(assoc new-node :lft 1 :rgt 2)]
@@ -176,7 +176,8 @@
         ;; found the parent
         (= (z/node loc) parent-node)
         (-> loc
-            (z/insert-right [new-node])
+            (z/up)
+            (z/append-child [new-node])
             (z/root)
             (vec-tree->nested-sets))
 

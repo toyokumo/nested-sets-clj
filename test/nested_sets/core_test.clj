@@ -368,7 +368,23 @@
               {:id :e :lft 6 :rgt 7}]
              (add-child e
                         d
-                        [a b c d]))))))
+                        [a b c d])))))
+  (testing "tree3"
+    ;; A---B
+    ;; |
+    ;; ___C
+    ;; |
+    ;; ---<D>
+    ;; Add D
+    (is (= [{:id :a :lft 1 :rgt 8}
+            {:id :b :lft 2 :rgt 3}
+            {:id :c :lft 4 :rgt 5}
+            {:id :d :lft 6 :rgt 7}]
+           (add-child {:id :d}
+                      {:id :a :lft 1 :rgt 6}
+                      [{:id :a :lft 1 :rgt 6}
+                       {:id :b :lft 2 :rgt 3}
+                       {:id :c :lft 4 :rgt 5}])))))
 
 (deftest add-left-sibling-test
   (testing "empty nodes"
