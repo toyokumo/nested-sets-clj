@@ -234,3 +234,29 @@
 
         :else
         (recur (z/next loc))))))
+
+(defn remove-subtree
+  "Remove the node and nodes that are under the node"
+  [node nodes]
+  (assert (not (root? node)))
+  (if (empty? nodes)
+    nodes
+    (loop [loc (z/vector-zip (nested-sets->vec-tree nodes))]
+      (cond
+        ;; node doesn't exist
+        (z/end? loc)
+        (vec-tree->nested-sets (z/root loc))
+
+        (z/branch? loc)
+        (recur (z/next loc))
+
+        ;; found the focus-node
+        (= (z/node loc) node)
+        (-> loc
+            (z/up)
+            (z/remove)
+            (z/root)
+            (vec-tree->nested-sets))
+
+        :else
+        (recur (z/next loc))))))

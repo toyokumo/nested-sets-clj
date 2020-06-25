@@ -429,9 +429,9 @@
                               [{:id :a :lft 1 :rgt 4}
                                {:id :b :lft 2 :rgt 3}]))))
   (testing "tree1"
-     ;; A--B
-     ;; |
-     ;; ---C
+    ;; A--B
+    ;; |
+    ;; ---C
     (is (= [{:id :a :lft 1 :rgt 8}
             {:id :b :lft 2 :rgt 3}
             {:id :c :lft 4 :rgt 5}
@@ -461,3 +461,38 @@
              (add-right-sibling e
                                 d
                                 [a b c d]))))))
+
+(deftest remove-subtree-test
+  (testing "empty nodes"
+    (is (= []
+           (remove-subtree {:id :a}
+                           []))))
+  (testing "only root"
+    (is (thrown? AssertionError (remove-subtree {:id :a :lft 1 :rgt 2}
+                                                [{:id :a :lft 1 :rgt 2}]))))
+  (testing "tree1"
+    ;; A--B
+    ;; |
+    ;; ---C
+    ;; Remove B
+    (is (= [{:id :a :lft 1 :rgt 4}
+            {:id :c :lft 2 :rgt 3}]
+           (remove-subtree {:id :b :lft 2 :rgt 3}
+                           [{:id :a :lft 1 :rgt 6}
+                            {:id :b :lft 2 :rgt 3}
+                            {:id :c :lft 4 :rgt 5}]))))
+  (testing "tree2"
+    ;; A-----B
+    ;; |
+    ;; |-----C----D
+    ;;       |
+    ;;       -----E
+    ;; Remove C
+    (is (= [{:id :a :lft 1 :rgt 4}
+            {:id :b :lft 2 :rgt 3}]
+           (remove-subtree {:id :c :lft 4 :rgt 9}
+                           [{:id :a :lft 1 :rgt 10}
+                            {:id :b :lft 2 :rgt 3}
+                            {:id :c :lft 4 :rgt 9}
+                            {:id :d :lft 5 :rgt 6}
+                            {:id :e :lft 7 :rgt 8}])))))
