@@ -1,49 +1,40 @@
 (ns nested-sets.core
   (:require
-   [clojure.zip :as z]
-   [schema.core :as s]))
+   [clojure.zip :as z]))
 
-(s/defschema Node
-  {:lft s/Int
-   :rgt s/Int
-   s/Keyword s/Any})
-
-(s/defn root?
+(defn root?
   "true if the node is the root node"
-  [{:keys [lft]} :- Node]
+  [{:keys [lft]}]
   (= lft 1))
 
-(s/defn leaf?
+(defn leaf?
   "true if the node is a leaf node"
-  [{:keys [lft rgt]} :- Node]
+  [{:keys [lft rgt]}]
   (= (- rgt lft) 1))
 
-(s/defn ancestor?
+(defn ancestor?
   "true if n1 is a ancestor of n2"
-  [n1 :- Node
-   n2 :- Node]
+  [n1 n2]
   (< (:lft n1) (:lft n2) (:rgt n1)))
 
-(s/defn descendant?
+(defn descendant?
   "true if n1 is a descendant of n2"
-  [n1 :- Node
-   n2 :- Node]
+  [n1 n2]
   (< (:lft n2) (:lft n1) (:rgt n2)))
 
-(s/defn sort-nested-sets
+(defn sort-nested-sets
   "sort as nested sets model"
-  [nodes :- [Node]]
+  [nodes]
   (sort-by :lft nodes))
 
-(s/defn nested-sets->vec-tree
+(defn nested-sets->vec-tree
   "Make a vector that represents a tree which enable to be a zipper using vector-zip
   nodes must represent nested sets
 
   This can take a options.
    :make-node - a function that, given a node, returns a vector which represents a node of a tree
                 default: clojure.core/vector in clj or cljs.core/vector in cljs"
-  [nodes :- [Node]
-   & [opts]]
+  [nodes & [opts]]
   (when (seq nodes)
     (let [make-node (or (:make-node opts) vector)
           [root & children] (sort-nested-sets nodes)]
@@ -75,7 +66,7 @@
                          (z/rightmost))
                      (conj parent-stack node)))))))))
 
-(s/defn adjacency-list->vec-tree
+(defn adjacency-list->vec-tree
   "Make a vector that represents a tree which enable to be a zipper using vector-zip
   nodes must represent adjacency list
 
@@ -85,10 +76,7 @@
   This can take a options.
    :make-node - a function that, given a node, returns a vector which represents a node of a tree
                 default: clojure.core/vector in clj or cljs.core/vector in cljs"
-  [id-key :- s/Keyword
-   parent-id-key :- s/Keyword
-   nodes
-   & [opts]]
+  [id-key parent-id-key nodes & [opts]]
   (when (seq nodes)
     (let [make-node (or (:make-node opts) vector)
           parent-children (group-by parent-id-key nodes)
@@ -123,7 +111,7 @@
                  siblings
                  siblings-stack))))))
 
-(s/defn vec-tree->nested-sets :- (s/maybe [Node])
+(defn vec-tree->nested-sets
   "Make a nested sets as a vector from a vector tree
   which may be made from nested-sets->vec-tree above"
   [vec-tree]

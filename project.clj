@@ -5,6 +5,5 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :deploy-repositories [["releases" {:url "https://repo.clojars.org" :creds :gpg}]
                         ["snapshots" :clojars]]
-  :dependencies [[org.clojure/clojure "1.10.1"]
-                 [prismatic/schema "1.1.12"]]
+  :dependencies [[org.clojure/clojure "1.10.1"]]
   :repl-options {:init-ns nested-sets.core})
