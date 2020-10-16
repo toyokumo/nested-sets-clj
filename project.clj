@@ -1,4 +1,4 @@
-(defproject toyokumo/nested-sets-clj "0.1.0-SNAPSHOT"
+(defproject toyokumo/nested-sets-clj "0.1.0"
   :description "Nested Sets Model for Clojure and ClojureScript"
   :url "https://github.com/toyokumo/nested-sets-clj"
   :license {:name "Apache, Version 2.0"
