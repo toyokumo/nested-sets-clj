@@ -38,7 +38,7 @@ Make a vector tree from nested sets which is sometimes gotton from DB.
 ;=> true
 ```
 
-`nested-sets->vec-tree` can also take a function which control how to make a node in the tree.
+`nested-sets->vec-tree` can also take a function which controls how to make a node in the tree.
 
 ```clojure
 (let [a {:id :a :lft 1 :rgt 18}
@@ -131,7 +131,7 @@ It also provides a function to make a vector tree from adjacency list.
      (nested/adjacency-list->vec-tree :id :parent-id [a b c d e f g h i])))
 ```
 
-`adjacency-list->vec-tree` can also take a function which control how to make a node in the tree.
+`adjacency-list->vec-tree` can also take a function which controls how to make a node in the tree.
 
 ```clojure
 (let [a {:id :a :parent-id nil}
